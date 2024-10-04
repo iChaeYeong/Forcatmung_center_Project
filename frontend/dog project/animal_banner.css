@@ -1,0 +1,127 @@
+.adopted {
+    background-color: gray;
+    cursor: not-allowed;
+}
+
+.adopt-button {
+    background-color: #ff6600;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.adopt-button:hover {
+    background-color: #e65c00;
+}
+
+/* 보호 동물 섹션 스타일 */
+.animal-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.animal-card{
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    text-align: center;
+    
+}
+
+.animal-image{
+    width: 100%; 
+    height: auto; 
+    max-width: 150px; 
+    object-fit: cover; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+}
+.animal-card h2 {
+    font-size: 20px;
+    margin: 15px 0;
+    color: #ff6600;
+}
+.animal-card p {
+    font-size: 16px;
+    margin: 10px 0;
+    color: #666;
+}
+/* 보호 동물 탭 스타일 */
+.animal-tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px; /* 탭과 아래 이미지 사이의 간격 */
+    border-bottom: 2px solid #ddd; /* 탭 아래 밑줄 */
+}
+
+.animal-tabs span {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+    position: relative;
+}
+
+/* 활성화된 탭에 적용되는 밑줄 스타일 */
+.animal-tabs span.active {
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #333;
+}
+
+/* 보호 동물 이미지 리스트 스타일 */
+.animal-list {
+    display: flex;
+    gap: 15px; /* 동물 아이템 간 간격 */
+}
+.animal-item{
+    display: flex;
+    flex: 1;
+}
+.animal-item img {
+    width: 300px; /* 기존보다 크기를 줄이기 위해 100%에서 80%로 변경 */
+    height: 300px; /* 높이를 줄임 */
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    
+}
+
+/* 정보 게시판 섹션 스타일 */
+.info-section {
+    flex: 1; /* 정보 게시판 섹션의 비율을 설정 */
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 정보 게시판 탭 스타일 */
+.info-tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #ddd;
+}
+
+.info-tabs span {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #555;
+}
+
+.info-tabs span.active {
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #333;
+}

@@ -32,6 +32,34 @@ showSlide(currentSlide);
 
 
 
+
+// 모든 카드에서 이미지와 버튼을 가져옴
+document.addEventListener('DOMContentLoaded', function () {
+    const animalCards = document.querySelectorAll('.animal-card');
+    
+    animalCards.forEach(function (card) {
+        const isAdopted = card.getAttribute('data-adopted') === 'true';
+        const button = card.querySelector('.adopt-button');
+        
+        if (isAdopted) {
+            button.textContent = '입양 완료';
+            button.classList.add('adopted'); // 입양 완료된 경우 스타일 변경
+            button.disabled = true; // 버튼 비활성화
+        } else {
+            button.textContent = '입양하기';
+            button.addEventListener('click', function () {
+                alert('입양 신청이 완료되었습니다.');
+            });
+        }
+    });
+});
+
+
+
+
+
+
+
 // 탭 전환 
 document.addEventListener("DOMContentLoaded", function() {
     // 보호 동물 탭 전환

@@ -4,6 +4,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background-color: #B58181;
 }
 
 header {
@@ -27,20 +28,36 @@ header nav ul li a {
     color: #333;
 }
 
-/* 메인 배너 섹션 */
-/* .main-banner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f2f2f2;
+.main-container{
+    background-color: white; /* 메인 컨테이너의 배경색 */
+    max-width: 1200px; /* 페이지의 최대 너비 */
+    margin: 20px auto; /* 상하단 20px, 좌우 자동으로 중앙 정렬 */
     padding: 20px;
-} */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 컨테이너에 그림자 추가 */
+    border-radius: 10px; /* 컨테이너 모서리를 둥글게 */
+}
 
 
 
-.banner-text h1 {
-    font-size: 2em;
+.banner-text{
+    position: absolute;
+    top: 50%; 
+    left: 80%;
+    transform: translate(-50%, -50%); /* 중앙 정렬을 위한 변환 */
+    color: white; /* 글씨 색상 */
+    text-align: right; /* 텍스트 중앙 정렬 */
+    padding: 0px; /* 여백 추가 */
+    border-radius: 10px; /* 모서리를 둥글게 */
+}
+.banner-text h2 {
+    font-size: 3em;
     margin-bottom: 10px;
+}
+.banner-text h1 {
+    font-size: 5em;
+}
+.banner-text p {
+    font-size: 2em;
 }
 
 .banner-text button {
@@ -49,88 +66,17 @@ header nav ul li a {
     color: white;
     border: none;
     cursor: pointer;
+    border-radius: 10px;
+    display: flex;
 }
 
-/* 레이아웃을 위한 Flexbox 컨테이너 */
+
 .layout-container {
     display: flex;
-    gap: 20px; /* 보호 동물과 정보 게시판 사이의 간격 */
-    justify-content: space-between; /* 양쪽 여백을 설정 */
+    gap: 20px; 
+    justify-content: space-between; 
 }
 
-/* 보호 동물 섹션 스타일 */
-.animal-section {
-    flex: 1; /* 보호 동물 섹션의 비율을 설정 */
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 보호 동물 탭 스타일 */
-.animal-tabs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px; /* 탭과 아래 이미지 사이의 간격 */
-    border-bottom: 2px solid #ddd; /* 탭 아래 밑줄 */
-}
-
-.animal-tabs span {
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 16px;
-    color: #555;
-    position: relative;
-}
-
-/* 활성화된 탭에 적용되는 밑줄 스타일 */
-.animal-tabs span.active {
-    font-weight: bold;
-    color: #333;
-    border-bottom: 2px solid #333;
-}
-
-/* 보호 동물 이미지 리스트 스타일 */
-.animal-list {
-    display: flex;
-    gap: 15px; /* 동물 아이템 간 간격 */
-}
-
-.animal-item img {
-    width: 150px; /* 각 동물 이미지를 일정한 크기로 설정 */
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* 정보 게시판 섹션 스타일 */
-.info-section {
-    flex: 1; /* 정보 게시판 섹션의 비율을 설정 */
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 정보 게시판 탭 스타일 */
-.info-tabs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #ddd;
-}
-
-.info-tabs span {
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 16px;
-    color: #555;
-}
-
-.info-tabs span.active {
-    font-weight: bold;
-    color: #333;
-    border-bottom: 2px solid #333;
-}
 
 /* 정보 게시판 내용 스타일 */
 .info-item {
@@ -149,7 +95,9 @@ header nav ul li a {
 .donate-section {
     text-align: center;
     padding: 30px;
-    background-color: #fff8e1;
+    background-color: #f1f1f1;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    
 }
 
 .progress-bar {
@@ -164,19 +112,27 @@ header nav ul li a {
 
 .progress {
     height: 100%;
-    background-color: #ff6600;
+    background: linear-gradient(to right, #505057, #F7AF08);
+
 }
 
 .donate-buttons button {
+    
     margin: 10px;
     padding: 10px 20px;
     border: none;
-    background-color: #ff6600;
-    color: white;
+    background-color: white;
+    color: black;
     cursor: pointer;
+    border-radius: 10px;
+    flex :1;
 }
 
-/* Footer 스타일 */
+.donate-section h3  {
+    font-size: 18px;
+    text-align: center;
+}
+
 
 /* Footer 스타일링 */
 footer {
@@ -199,15 +155,21 @@ footer {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
+    border-bottom: 2px solid #ddd;
+    border-top: 2px solid #ddd;
 }
 
 .footer-content{
     display: flex;
-    justify-content: space-between;
+    text-align: center;
+    flex:1;
+    margin-left: 20px;
 }
 
 .footer-donation {
+    display: flex;
     text-align: center;
+    flex:1;
 }
 
 .footer-donation p {
