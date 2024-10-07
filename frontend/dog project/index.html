@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>보호소 사이트</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="main_img.css">
+    <link rel="stylesheet" href="main_banner.css">
     <link rel="stylesheet" href="animal_banner.css">
 
     
@@ -13,14 +13,58 @@
 <body>
     <div class="main-container">
         <header>
+            <a href="#" class="logo-button">
+                <img src="logo.png" alt="로고" class="logo-image">
+            </a>
             <nav>
                 <ul>
-                    <li><a href="#">보호소 소개</a></li>
-                    <li><a href="#">보호 동물</a></li>
-                    <li><a href="#">활동</a></li>
-                    <li><a href="#">후원하기</a></li>
-                    <li><a href="#">정보게시판</a></li>
-                    <li><a href="#">문의</a></li>
+                    <li><a href="#">HOME |</a></li>
+                    <li><a href="#"> LANGUAGE |</a></li>
+                    <li><a href="#"> SEARCH</a></li>
+                </ul>
+            </nav>
+            <nav>
+                <ul>
+                    <li><a href="#" class="menu-item" data-menu="home">소개</a>
+                        <ul>
+                            <li><a href="#">인사말</a></li>
+                            <li><a href="#">비전</a></li>
+                            <li><a href="#">연혁</a></li>
+                            <li><a href="#">조직도</a></li>
+                            <li><a href="#">오시는 길</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="animals">보호동물</a>
+                        <ul>
+                            <li><a href="#">보호강아지</a></li>
+                            <li><a href="#">보호고양이</a></li>
+                            <li><a href="#">기타보호동물</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="activities">활동</a>
+                        <ul>
+                            <li><a href="#">참여하기</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="support">후원</a>
+                        <ul>
+                            <li><a href="#">후원하기</a></li>
+                            <li><a href="#">후원안내</a></li>
+                            <li><a href="#">후원금 사용내역</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="board">게시판</a>
+                        <ul>
+                            <li><a href="#">공지사항</a></li>
+                            <li><a href="#">자유게시판</a></li>
+                            <li><a href="#">입양 후 이야기</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="contact">문의</a>
+                        <ul>
+                            <li><a href="#">문의하기</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </nav>
         </header>
@@ -30,19 +74,26 @@
                 <div class="slider">
                     <div class="slides">
                         <div class="slide"><img src="family1.jpg" alt="가족과 반려동물 1" ></div>
+                        <div class="slide"><img src="family2.jpg" alt="가족과 반려동물 2">
+                        </div>
                         <div class="banner-text">
                             <h2>For</h2>
                             <h1>CAT & MUNG</h1>
                             <p>CENTER </p>
-                            <div class="actions"><a href="#content" ><button>자세히보기</button></a></div>
-                            <div class="actions"><a href="#elements"><button>참여하기</button></a></div>
                             </ul>
                         </div>
                         
                     </div>
-                    <!-- <button class="prev" onclick="prevside()">&#10094;</button>
-                    <button class="next" onclick="nextside()">&#10095;</button> -->
+                    <button class="prev" onclick="prevside()">&#10094;</button>
+                    <button class="next" onclick="nextside()">&#10095;</button>
+                    <!-- 슬라이드 네비게이션 -->
+                    <div class="slider-dots">
+                        <span class="dot" onclick="currentSlide(0)"></span>
+                        <span class="dot" onclick="currentSlide(1)"></span>
+                        <span class="dot" onclick="currentSlide(2)"></span>
+                    </div>
                 </div>
+            </section>
                 <!-- 보호 동물 섹션 -->
                 <div class="animal-section">
                     <h2>가족을 찾고 있어요</h2>
@@ -58,49 +109,55 @@
                     <div id="animal-list">
                         <!-- 보호 고양이 섹션 -->
                         <section class="animal-section" data-tab-content="cats">
-                            <div class="animal-card">
-                                <img src="cat1.jpg" alt="고양이 1" class="animal-image">
-                                <h2>코리안 숏 헤어</h2>
-                                <p>1개월 | 성별: 암컷 | 특징: 활발함</p>
-                                <button class="adopt-button">입양하기</button>
-                            </div>
-                            <div class="animal-card">
-                                <img src="cat2.jpg" alt="고양이 2" class="animal-image">
-                                <h2>코리안 숏 헤어</h2>
-                                <p>2개월 | 성별: 수컷 | 특징: 애교 많음</p>
-                                <button class="adopt-button">입양하기</button>
+                            <div class="image-container">
+                                <div class="animal-card">
+                                    <img src="cat1.jpg" alt="고양이 1" class="animal-image">
+                                    <h2>코리안 숏 헤어</h2>
+                                    <p>1개월 | 성별: 암컷 | 특징: 활발함</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
+                                <div class="animal-card">
+                                    <img src="cat2.jpg" alt="고양이 2" class="animal-image">
+                                    <h2>코리안 숏 헤어</h2>
+                                    <p>2개월 | 성별: 수컷 | 특징: 애교 많음</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
                             </div>
                         </section>
 
                         <!-- 보호 강아지 섹션 -->
                         <section class="animal-section" data-tab-content="dogs" style="display: none;">
-                            <div class="animal-card">
-                                <img src="dog1.jpg" alt="강아지 1" class="animal-image">
-                                <h2>포메라니안</h2>
-                                <p>1개월 | 성별: 암컷 | 특징: 활발함</p>
-                                <button class="adopt-button">입양하기</button>
-                            </div>
-                            <div class="animal-card">
-                                <img src="dog2.jpg" alt="강아지 2" class="animal-image">
-                                <h2>푸들</h2>
-                                <p>2개월 | 성별: 수컷 | 특징: 애교 많음</p>
-                                <button class="adopt-button">입양하기</button>
+                            <div class="image-container">
+                                <div class="animal-card">
+                                    <img src="dog1.jpg" alt="강아지 1" class="animal-image">
+                                    <h2>포메라니안</h2>
+                                    <p>1개월 | 성별: 암컷 | 특징: 활발함</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
+                                <div class="animal-card">
+                                    <img src="dog2.jpg" alt="강아지 2" class="animal-image">
+                                    <h2>푸들</h2>
+                                    <p>2개월 | 성별: 수컷 | 특징: 애교 많음</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
                             </div>
                         </section>
 
                         <!-- 그 외 동물 섹션 -->
                         <section class="animal-section" data-tab-content="others" style="display: none;">
-                            <div class="animal-card">
-                                <img src="rabbit1.jpg" alt="토끼 1" class="animal-image">
-                                <h2>네덜란드 드워프</h2>
-                                <p>6개월 | 성별: 암컷 | 특징: 조용함</p>
-                                <button class="adopt-button">입양하기</button>
-                            </div>
-                            <div class="animal-card">
-                                <img src="bird1.jpg" alt="새 1" class="animal-image">
-                                <h2>사랑앵무</h2>
-                                <p>1년 | 성별: 수컷 | 특징: 활발함</p>
-                                <button class="adopt-button">입양하기</button>
+                            <div class="image-container">
+                                <div class="animal-card">
+                                    <img src="rabbit1.jpg" alt="토끼 1" class="animal-image">
+                                    <h2>네덜란드 드워프</h2>
+                                    <p>6개월 | 성별: 암컷 | 특징: 조용함</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
+                                <div class="animal-card">
+                                    <img src="bird1.jpg" alt="새 1" class="animal-image">
+                                    <h2>사랑앵무</h2>
+                                    <p>1년 | 성별: 수컷 | 특징: 활발함</p>
+                                    <button class="adopt-button">입양하기</button>
+                                </div>
                             </div>
                         </section>
                     </div>

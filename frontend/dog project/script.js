@@ -1,34 +1,60 @@
-let currentSlide = 0; // 현재 슬라이드 인덱스
-const slides = document.querySelectorAll('.slide img');
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
 
-function showSlide(index) {
-    // 슬라이드 인덱스가 범위를 벗어나지 않도록 조정
-    if (index >= totalSlides) {
-        currentSlide = 0; // 마지막 슬라이드 다음에 처음으로 돌아감
-    } else if (index < 0) {
-        currentSlide = totalSlides - 1; // 첫 슬라이드 이전에 마지막으로 이동
-    } else {
-        currentSlide = index;
-    }
+// 슬라이드 네비게이션 점(dot) 요소 추가
+const dotsContainer = document.createElement('div');
+dotsContainer.classList.add('slider-dots');
+document.querySelector('.main-banner').appendChild(dotsContainer);
 
-    // 슬라이드를 이동시키는 transform 설정
-    const slideWidth = slides[currentSlide].clientWidth;
-    document.querySelector('.slides').style.transform = `translateX(-${slideWidth * currentSlide}px)`;
+// 슬라이드 네비게이션 점(dot) 생성
+for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.classList.add('dot');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
 }
 
-function nextside() {
-    showSlide(currentSlide + 1);
+// 슬라이드와 네비게이션 점 상태 업데이트
+function updateSlidePosition() {
+    const slider = document.querySelector('.slides');
+    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+    updateDots();
 }
 
-function prevside() {
-    showSlide(currentSlide - 1);
+function updateDots() {
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach(dot => dot.classList.remove('active'));
+    dots[currentSlide].classList.add('active');
 }
 
-// 초기화: 첫 번째 슬라이드 보여줌
-showSlide(currentSlide);
+// 슬라이드를 특정 번호로 이동
+function goToSlide(index) {
+    currentSlide = index;
+    updateSlidePosition();
+}
 
+// 이전 슬라이드로 이동
+function prevSlide() {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    updateSlidePosition();
+}
 
+// 다음 슬라이드로 이동
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    updateSlidePosition();
+}
+
+// 이전 및 다음 버튼 클릭 이벤트 핸들러
+document.querySelector('.prev').addEventListener('click', prevSlide);
+document.querySelector('.next').addEventListener('click', nextSlide);
+
+// 페이지 로드 시 첫 슬라이드를 보여주고 점 업데이트
+updateSlidePosition();
+
+// 자동 슬라이드 기능 (3초마다 슬라이드 이동)
+setInterval(nextSlide, 3000);
 
 
 
