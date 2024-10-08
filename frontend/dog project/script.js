@@ -130,3 +130,8 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+
+function redirectToAddPage() {
+    window.location.href = 'info-page.html'; // 이동할 페이지 경로
+}
+
