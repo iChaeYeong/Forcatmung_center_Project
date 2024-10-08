@@ -1,23 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { TextField, Button, Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, Pagination } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';  // + 아이콘 추가
 
 const NoticeBoard = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [image, setImage] = useState(null);
+    const [images, setImages] = useState([]);  // 여러 이미지
+    const [files, setFiles] = useState([]);  // 여러 파일
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [imagePreview, setImagePreview] = useState('');
+    const [imagePreviews, setImagePreviews] = useState([]);  // 여러 이미지 미리보기
     const [editingNotice, setEditingNotice] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');  // 검색어 상태 추가
     const limit = 5;
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchNotices();
-    }, [page, search]);  // 페이지나 검색어가 변경될 때마다 공지사항 목록을 불러옴
+    }, [page, search]);
 
     const fetchNotices = () => {
         setLoading(true);
@@ -43,9 +47,9 @@ const NoticeBoard = () => {
         const formData = new FormData();
         formData.append('title', title);
         formData.append('content', content);
-        if (image) {
-            formData.append('image', image);
-        }
+
+        images.forEach((image) => formData.append('images', image));  // 여러 이미지 추가
+        files.forEach((file) => formData.append('files', file));  // 여러 파일 추가
 
         if (editingNotice) {
             axios.put(`http://localhost:5001/api/notice/${editingNotice}`, formData, {
@@ -53,11 +57,7 @@ const NoticeBoard = () => {
             })
                 .then(() => {
                     alert('공지사항이 성공적으로 수정되었습니다!');
-                    setTitle('');
-                    setContent('');
-                    setImage(null);
-                    setImagePreview('');
-                    setEditingNotice(null);
+                    resetForm();
                     fetchNotices();
                 })
                 .catch((error) => {
@@ -69,10 +69,7 @@ const NoticeBoard = () => {
             })
                 .then(() => {
                     alert('공지사항이 성공적으로 등록되었습니다!');
-                    setTitle('');
-                    setContent('');
-                    setImage(null);
-                    setImagePreview('');
+                    resetForm();
                     fetchNotices();
                 })
                 .catch((error) => {
@@ -81,25 +78,34 @@ const NoticeBoard = () => {
         }
     };
 
+    const resetForm = () => {
+        setTitle('');
+        setContent('');
+        setImages([]);
+        setFiles([]);
+        setImagePreviews([]);
+        setEditingNotice(null);
+    };
+
+    const handleViewDetail = (id) => {
+        navigate(`/notice/${id}`);  // 클릭 시 해당 공지사항의 상세 페이지로 이동
+    };
+
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result);
-        };
-        if (file) {
-            reader.readAsDataURL(file);
-        }
+        const selectedImages = Array.from(e.target.files);
+        setImages(selectedImages);
+        const imagePreviews = selectedImages.map((image) => URL.createObjectURL(image));
+        setImagePreviews(imagePreviews);
+    };
+
+    const handleFileChange = (e) => {
+        setFiles(Array.from(e.target.files));  // 여러 파일 선택
     };
 
     const handleEdit = (notice) => {
         setTitle(notice.title);
         setContent(notice.content);
         setEditingNotice(notice.id);
-        if (notice.image) {
-            setImagePreview(`http://localhost:5001${notice.image}`);
-        }
     };
 
     const handleDelete = (id) => {
@@ -127,7 +133,7 @@ const NoticeBoard = () => {
     return (
         <Container maxWidth="sm">
             {/* 공지사항 작성 폼 */}
-            <Box sx={{ mt: 4, p: 3, border: '1px solid #ddd', borderRadius: '8px' }}>
+            <Box sx={{ mt: 4, p: 3, border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
                 <Typography variant="h4" gutterBottom>
                     {editingNotice ? '공지사항 수정' : '공지사항 작성'}
                 </Typography>
@@ -150,13 +156,29 @@ const NoticeBoard = () => {
                         onChange={(e) => setContent(e.target.value)}
                         sx={{ mb: 2 }}
                     />
-                    <input type="file" onChange={handleImageChange} accept="image/*" />
-                    {imagePreview && (
-                        <Box sx={{ mt: 2 }}>
-                            <Typography variant="subtitle1">이미지 미리보기:</Typography>
-                            <img src={imagePreview} alt="Image preview" style={{ maxWidth: '100%', marginTop: '10px' }} />
+
+                    {/* 이미지 업로드 */}
+                    <Typography variant="subtitle1" sx={{ mt: 2 }}>이미지 업로드:</Typography>
+                    <input type="file" onChange={handleImageChange} accept="image/*" multiple />
+                    {imagePreviews.length > 0 && (
+                        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {imagePreviews.map((preview, index) => (
+                                <img key={index} src={preview} alt="Image preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                            ))}
                         </Box>
                     )}
+
+                    {/* 파일 업로드 */}
+                    <Typography variant="subtitle1" sx={{ mt: 2 }}>파일 업로드 (PDF, 문서 등):</Typography>
+                    <input type="file" onChange={handleFileChange} multiple />
+                    {files.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                            {files.map((file, index) => (
+                                <Typography key={index} variant="body2">{file.name}</Typography>
+                            ))}
+                        </Box>
+                    )}
+
                     <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
                         {editingNotice ? '수정 완료' : '작성'}
                     </Button>
@@ -182,34 +204,58 @@ const NoticeBoard = () => {
                     <CircularProgress />
                 ) : (
                     <List>
-                        {notices.map((notice) => (
-                            <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2, display: 'block' }}>
-                                <ListItemText
-                                    primary={notice.title}
-                                    secondary={
-                                        <>
-                                            <Typography variant="body2" color="textSecondary">
-                                                {notice.content}
-                                            </Typography>
-                                            {notice.image && (
-                                                <img src={`http://localhost:5001${notice.image}`} alt={notice.title} style={{ maxWidth: '100%', marginTop: '10px' }} />
-                                            )}
-                                            <Typography variant="caption" color="textSecondary">
-                                                {new Date(notice.created_at).toLocaleString()}
-                                            </Typography>
-                                        </>
-                                    }
-                                />
-                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                                    <Button onClick={() => handleEdit(notice)} variant="contained" color="secondary" sx={{ mr: 1 }}>
-                                        수정
-                                    </Button>
-                                    <Button onClick={() => handleDelete(notice.id)} variant="contained" color="error">
-                                        삭제
-                                    </Button>
-                                </Box>
-                            </ListItem>
-                        ))}
+                        {notices.map((notice) => {
+                            // 이미지 및 파일을 JSON 배열로 변환
+                            const noticeImages = notice.images ? JSON.parse(notice.images) : [];
+                            const noticeFiles = notice.files ? JSON.parse(notice.files) : [];
+
+                            return (
+                                <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2, backgroundColor: '#fff' }}>
+                                    <ListItemText
+                                        primary={notice.title}
+                                        secondary={
+                                            <>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    {notice.content}
+                                                </Typography>
+                                                {noticeImages.length > 0 && (
+                                                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                        {noticeImages.map((image, index) => (
+                                                            <img key={index} src={`http://localhost:5001${image}`} alt={notice.title} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                                                        ))}
+                                                    </Box>
+                                                )}
+                                                {noticeFiles.length > 0 && (
+                                                    <Box sx={{ mt: 2 }}>
+                                                        <Typography variant="subtitle1">첨부 파일:</Typography>
+                                                        {noticeFiles.map((file, index) => (
+                                                            <a key={index} href={`http://localhost:5001${file}`} download>
+                                                                {file.split('/').pop()}
+                                                            </a>
+                                                        ))}
+                                                    </Box>
+                                                )}
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {new Date(notice.created_at).toLocaleString()}
+                                                </Typography>
+                                            </>
+                                        }
+                                    />
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                        <Button onClick={() => handleEdit(notice)} variant="contained" color="secondary" sx={{ mr: 1 }}>
+                                            수정
+                                        </Button>
+                                        <Button onClick={() => handleDelete(notice.id)} variant="contained" color="error">
+                                            삭제
+                                        </Button>
+                                        {/* 세부 페이지로 이동하는 + 아이콘 */}
+                                        <Button onClick={() => handleViewDetail(notice.id)} sx={{ ml: 1 }}>
+                                            <AddCircleOutlineIcon />
+                                        </Button>
+                                    </Box>
+                                </ListItem>
+                            );
+                        })}
                     </List>
                 )}
 

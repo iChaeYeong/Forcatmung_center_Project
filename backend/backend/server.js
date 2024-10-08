@@ -7,14 +7,15 @@ const path = require('path');
 const app = express();
 const PORT = 5001;
 
-// MySQL 연결 설정
+// MySQL 연결 설정 (환경 변수를 사용하는 것이 더 좋습니다.)
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '081365',
-    database: 'noticeboard'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '081365',
+    database: process.env.DB_NAME || 'noticeboard'
 });
 
+// MySQL 연결
 db.connect((err) => {
     if (err) {
         console.error('MySQL 연결 오류:', err);
@@ -23,20 +24,24 @@ db.connect((err) => {
     console.log('MySQL에 연결되었습니다.');
 });
 
-// 업로드 폴더 생성 (폴더가 없으면 생성)
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-    console.log('Uploads 폴더가 생성되었습니다.');
-}
+// 업로드 폴더 생성 함수
+const createUploadDir = () => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+        console.log('Uploads 폴더가 생성되었습니다.');
+    }
+};
+
+createUploadDir();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(uploadDir));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 로그 기록 함수
-const logFilePath = path.join(__dirname, 'server-log.txt');
 const logToFile = (message) => {
+    const logFilePath = path.join(__dirname, 'server-log.txt');
     const logMessage = `${new Date().toLocaleString()}: ${message}\n`;
     fs.appendFile(logFilePath, logMessage, (err) => {
         if (err) {
@@ -45,7 +50,7 @@ const logToFile = (message) => {
     });
 };
 
-// multer 설정
+// multer 설정 (여러 이미지 및 파일 허용)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');
@@ -56,38 +61,51 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedFileTypes = /jpeg|jpg|png|gif/;
+    const allowedFileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|ppt|pptx/;
     const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedFileTypes.test(file.mimetype);
     if (extname && mimetype) {
-        return cb(null, true);
+        cb(null, true);
     } else {
-        cb(new Error('이미지 파일만 업로드 가능합니다.'));
+        cb(new Error('이미지 및 문서 파일만 업로드 가능합니다.'));
     }
 };
 
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter
-});
+const upload = multer({ storage, fileFilter });
 
-// 공지사항 작성 엔드포인트 (POST 요청 + 이미지 업로드)
-app.post('/api/notice', upload.single('image'), (req, res) => {
+// 공통 SQL 실행 함수
+const executeQuery = (query, params, callback) => {
+    db.query(query, params, (err, results) => {
+        if (err) {
+            console.error('SQL 실행 오류:', err);
+            return callback(err);
+        }
+        callback(null, results);
+    });
+};
+
+// 공지사항 작성 엔드포인트 (POST 요청 + 여러 이미지 및 파일 업로드)
+app.post('/api/notice', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'files', maxCount: 5 }]), (req, res) => {
     const { title, content } = req.body;
 
     if (!title || !content) {
         return res.status(400).json({ error: '제목과 내용을 입력해야 합니다.' });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
-    const query = 'INSERT INTO notices (title, content, image) VALUES (?, ?, ?)';
-    db.query(query, [title, content, image], (err, result) => {
+    // 업로드된 이미지와 파일 경로 처리
+    const images = req.files['images'] ? req.files['images'].map(file => `/uploads/${file.filename}`) : [];
+    const files = req.files['files'] ? req.files['files'].map(file => `/uploads/${file.filename}`) : [];
+
+    // 데이터를 DB에 저장
+    const query = 'INSERT INTO notices (title, content, images, files) VALUES (?, ?, ?, ?)';
+    const values = [title, content, JSON.stringify(images), JSON.stringify(files)];
+
+    executeQuery(query, values, (err, result) => {
         if (err) {
             console.error('공지사항 저장 오류:', err);
             return res.status(500).json({ error: '데이터 저장 중 오류가 발생했습니다.' });
         }
-        const logMessage = `공지사항 작성 (제목: ${title}, 내용: ${content}, 이미지: ${image})`;
-        console.log(logMessage);
+        const logMessage = `공지사항 작성 (제목: ${title}, 내용: ${content}, 이미지: ${JSON.stringify(images)}, 파일: ${JSON.stringify(files)})`;
         logToFile(logMessage);
         res.status(200).json({ message: '공지사항이 성공적으로 저장되었습니다.' });
     });
@@ -95,50 +113,48 @@ app.post('/api/notice', upload.single('image'), (req, res) => {
 
 // 공지사항 목록 불러오기 엔드포인트 (GET 요청 + 페이지네이션 + 검색)
 app.get('/api/notices', (req, res) => {
-    const page = parseInt(req.query.page) || 1;  // 요청된 페이지 번호, 기본값 1
-    const limit = parseInt(req.query.limit) || 5;  // 페이지당 항목 수, 기본값 5
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
-    const search = req.query.search ? `%${req.query.search}%` : '%';  // 검색어가 있으면 적용, 없으면 전체 검색
+    const search = req.query.search ? `%${req.query.search}%` : '%';
 
     const query = 'SELECT * FROM notices WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    db.query(query, [search, search, limit, offset], (err, results) => {
+    const countQuery = 'SELECT COUNT(*) AS total FROM notices WHERE title LIKE ? OR content LIKE ?';
+
+    executeQuery(query, [search, search, limit, offset], (err, results) => {
         if (err) {
-            console.error('공지사항 불러오기 오류:', err);
-            return res.status(500).json({ error: '데이터 불러오기 중 오류가 발생했습니다.' });
+            return res.status(500).json({ error: '공지사항 불러오기 중 오류가 발생했습니다.' });
         }
 
-        // 총 공지사항 수를 가져와서 페이지네이션 정보도 함께 반환
-        const countQuery = 'SELECT COUNT(*) AS total FROM notices WHERE title LIKE ? OR content LIKE ?';
-        db.query(countQuery, [search, search], (err, countResults) => {
+        executeQuery(countQuery, [search, search], (err, countResults) => {
             if (err) {
-                console.error('공지사항 개수 불러오기 오류:', err);
-                return res.status(500).json({ error: '데이터 불러오기 중 오류가 발생했습니다.' });
+                return res.status(500).json({ error: '공지사항 개수 불러오기 중 오류가 발생했습니다.' });
             }
+
             const totalNotices = countResults[0].total;
             res.status(200).json({ notices: results, total: totalNotices, page, limit });
         });
     });
 });
 
-// 공지사항 수정 엔드포인트 (PUT 요청 + 이미지 수정)
-app.put('/api/notice/:id', upload.single('image'), (req, res) => {
+// 공지사항 수정 엔드포인트 (PUT 요청 + 이미지 및 파일 수정)
+app.put('/api/notice/:id', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'files', maxCount: 5 }]), (req, res) => {
     const { title, content } = req.body;
     const { id } = req.params;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const images = req.files['images'] ? req.files['images'].map(file => `/uploads/${file.filename}`) : null;
+    const files = req.files['files'] ? req.files['files'].map(file => `/uploads/${file.filename}`) : null;
 
     if (!title || !content) {
         return res.status(400).json({ error: '제목과 내용을 입력해야 합니다.' });
     }
 
-    const query = 'UPDATE notices SET title = ?, content = ?, image = IFNULL(?, image) WHERE id = ?';
-    db.query(query, [title, content, image, id], (err, result) => {
+    const query = 'UPDATE notices SET title = ?, content = ?, images = IFNULL(?, images), files = IFNULL(?, files) WHERE id = ?';
+    executeQuery(query, [title, content, JSON.stringify(images), JSON.stringify(files), id], (err) => {
         if (err) {
-            console.error('공지사항 수정 오류:', err);
             logToFile(`공지사항 수정 실패 (ID: ${id})`);
             return res.status(500).json({ error: '공지사항 수정 중 오류가 발생했습니다.' });
         }
-        const logMessage = `공지사항 수정 (ID: ${id}, 제목: ${title}, 내용: ${content}, 이미지: ${image})`;
-        console.log(logMessage);
+        const logMessage = `공지사항 수정 (ID: ${id}, 제목: ${title}, 내용: ${content}, 이미지: ${JSON.stringify(images)}, 파일: ${JSON.stringify(files)})`;
         logToFile(logMessage);
         res.status(200).json({ message: '공지사항이 성공적으로 수정되었습니다.' });
     });
@@ -148,16 +164,31 @@ app.put('/api/notice/:id', upload.single('image'), (req, res) => {
 app.delete('/api/notice/:id', (req, res) => {
     const { id } = req.params;
     const query = 'DELETE FROM notices WHERE id = ?';
-    db.query(query, [id], (err, result) => {
+
+    executeQuery(query, [id], (err) => {
         if (err) {
-            console.error('공지사항 삭제 오류:', err);
             logToFile(`공지사항 삭제 실패 (ID: ${id})`);
             return res.status(500).json({ error: '공지사항 삭제 중 오류가 발생했습니다.' });
         }
         const logMessage = `공지사항 삭제 (ID: ${id})`;
-        console.log(logMessage);
         logToFile(logMessage);
         res.status(200).json({ message: '공지사항이 성공적으로 삭제되었습니다.' });
+    });
+});
+
+// 공지사항 상세 불러오기 엔드포인트 (GET 요청)
+app.get('/api/notice/:id', (req, res) => {
+    const { id } = req.params;
+    const query = 'SELECT * FROM notices WHERE id = ?';
+
+    executeQuery(query, [id], (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: '공지사항 불러오기 중 오류가 발생했습니다.' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: '해당 공지사항을 찾을 수 없습니다.' });
+        }
+        res.status(200).json(results[0]);
     });
 });
 
