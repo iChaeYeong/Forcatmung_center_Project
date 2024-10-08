@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { TextField, Button, Container, Typography, Box, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, Pagination } from '@mui/material';
 
 const NoticeBoard = () => {
-    const [title, setTitle] = useState('');  // 제목 입력 상태
-    const [content, setContent] = useState('');  // 내용 입력 상태
-    const [image, setImage] = useState(null);  // 이미지 파일 상태
-    const [notices, setNotices] = useState([]);  // 공지사항 목록 상태
-    const [loading, setLoading] = useState(false);  // 로딩 상태
-    const [imagePreview, setImagePreview] = useState('');  // 이미지 미리보기
-    const [editingNotice, setEditingNotice] = useState(null);  // 수정 중인 공지사항
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [image, setImage] = useState(null);
+    const [notices, setNotices] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [imagePreview, setImagePreview] = useState('');
+    const [editingNotice, setEditingNotice] = useState(null);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [search, setSearch] = useState('');  // 검색어 상태 추가
+    const limit = 5;
 
-    // 공지사항 목록 불러오기
     useEffect(() => {
         fetchNotices();
-    }, []);
+    }, [page, search]);  // 페이지나 검색어가 변경될 때마다 공지사항 목록을 불러옴
 
     const fetchNotices = () => {
         setLoading(true);
-        axios.get('http://localhost:5001/api/notices')
+        axios.get(`http://localhost:5001/api/notices?page=${page}&limit=${limit}&search=${search}`)
             .then((response) => {
-                setNotices(response.data);
+                setNotices(response.data.notices);
+                setTotalPages(Math.ceil(response.data.total / limit));
                 setLoading(false);
             })
             .catch((error) => {
@@ -31,7 +35,6 @@ const NoticeBoard = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
         if (!title || !content) {
             alert('제목과 내용을 입력해 주세요.');
             return;
@@ -41,55 +44,46 @@ const NoticeBoard = () => {
         formData.append('title', title);
         formData.append('content', content);
         if (image) {
-            formData.append('image', image);  // 이미지 파일 추가
+            formData.append('image', image);
         }
 
         if (editingNotice) {
-            // 수정 요청
             axios.put(`http://localhost:5001/api/notice/${editingNotice}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
-                .then((response) => {
+                .then(() => {
                     alert('공지사항이 성공적으로 수정되었습니다!');
                     setTitle('');
                     setContent('');
                     setImage(null);
                     setImagePreview('');
                     setEditingNotice(null);
-                    fetchNotices();  // 목록 갱신
+                    fetchNotices();
                 })
                 .catch((error) => {
                     console.error('공지사항 수정 중 오류 발생:', error);
                 });
         } else {
-            // 새 공지사항 작성 요청
             axios.post('http://localhost:5001/api/notice', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
-                .then((response) => {
-                    console.log('Response:', response.data);
+                .then(() => {
                     alert('공지사항이 성공적으로 등록되었습니다!');
                     setTitle('');
                     setContent('');
                     setImage(null);
-                    setImagePreview('');  // 이미지 미리보기 초기화
-                    fetchNotices();  // 목록 갱신
+                    setImagePreview('');
+                    fetchNotices();
                 })
                 .catch((error) => {
-                    console.error('There was an error!', error);
+                    console.error('공지사항 등록 중 오류 발생:', error);
                 });
         }
     };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        setImage(file);  // 선택된 파일 설정
-
-        // 이미지 미리보기 설정
+        setImage(file);
         const reader = new FileReader();
         reader.onloadend = () => {
             setImagePreview(reader.result);
@@ -102,9 +96,9 @@ const NoticeBoard = () => {
     const handleEdit = (notice) => {
         setTitle(notice.title);
         setContent(notice.content);
-        setEditingNotice(notice.id);  // 수정 중인 공지사항 설정
+        setEditingNotice(notice.id);
         if (notice.image) {
-            setImagePreview(`http://localhost:5001${notice.image}`);  // 이미지 미리보기 설정
+            setImagePreview(`http://localhost:5001${notice.image}`);
         }
     };
 
@@ -112,7 +106,7 @@ const NoticeBoard = () => {
         if (window.confirm('정말 삭제하시겠습니까?')) {
             axios.delete(`http://localhost:5001/api/notice/${id}`)
                 .then(() => {
-                    fetchNotices();  // 삭제 후 목록 갱신
+                    fetchNotices();
                     alert('공지사항이 성공적으로 삭제되었습니다!');
                 })
                 .catch((error) => {
@@ -121,8 +115,18 @@ const NoticeBoard = () => {
         }
     };
 
+    const handlePageChange = (event, value) => {
+        setPage(value);
+    };
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);  // 검색어 상태 변경
+        setPage(1);  // 검색 시 페이지를 1로 초기화
+    };
+
     return (
         <Container maxWidth="sm">
+            {/* 공지사항 작성 폼 */}
             <Box sx={{ mt: 4, p: 3, border: '1px solid #ddd', borderRadius: '8px' }}>
                 <Typography variant="h4" gutterBottom>
                     {editingNotice ? '공지사항 수정' : '공지사항 작성'}
@@ -159,6 +163,17 @@ const NoticeBoard = () => {
                 </form>
             </Box>
 
+            {/* 검색 필드 추가 */}
+            <TextField
+                label="검색"
+                variant="outlined"
+                fullWidth
+                value={search}
+                onChange={handleSearchChange}
+                sx={{ mt: 4, mb: 4 }}
+            />
+
+            {/* 공지사항 목록 */}
             <Box sx={{ mt: 4 }}>
                 <Typography variant="h5" gutterBottom>
                     공지사항 목록
@@ -168,7 +183,7 @@ const NoticeBoard = () => {
                 ) : (
                     <List>
                         {notices.map((notice) => (
-                            <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2 }}>
+                            <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2, display: 'block' }}>
                                 <ListItemText
                                     primary={notice.title}
                                     secondary={
@@ -185,11 +200,11 @@ const NoticeBoard = () => {
                                         </>
                                     }
                                 />
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                                    <Button onClick={() => handleEdit(notice)} variant="contained" color="secondary" size="small">
+                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                    <Button onClick={() => handleEdit(notice)} variant="contained" color="secondary" sx={{ mr: 1 }}>
                                         수정
                                     </Button>
-                                    <Button onClick={() => handleDelete(notice.id)} variant="contained" color="error" size="small">
+                                    <Button onClick={() => handleDelete(notice.id)} variant="contained" color="error">
                                         삭제
                                     </Button>
                                 </Box>
@@ -197,6 +212,14 @@ const NoticeBoard = () => {
                         ))}
                     </List>
                 )}
+
+                {/* 페이지네이션 */}
+                <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={handlePageChange}
+                    sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}
+                />
             </Box>
         </Container>
     );

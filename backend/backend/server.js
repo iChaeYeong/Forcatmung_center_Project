@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
-const multer = require('multer');  // 파일 업로드용 multer
-const fs = require('fs');  // 파일 시스템 접근용
-const path = require('path');  // 파일 경로 처리용
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const PORT = 5001;
 
@@ -11,11 +11,10 @@ const PORT = 5001;
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '081365',  // MySQL root 계정 비밀번호
+    password: '081365',
     database: 'noticeboard'
 });
 
-// 데이터베이스 연결 확인
 db.connect((err) => {
     if (err) {
         console.error('MySQL 연결 오류:', err);
@@ -31,10 +30,9 @@ if (!fs.existsSync(uploadDir)) {
     console.log('Uploads 폴더가 생성되었습니다.');
 }
 
-// CORS 및 JSON 파싱 설정
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(uploadDir));  // 업로드된 파일에 대한 정적 경로
+app.use('/uploads', express.static(uploadDir));
 
 // 로그 기록 함수
 const logFilePath = path.join(__dirname, 'server-log.txt');
@@ -47,18 +45,16 @@ const logToFile = (message) => {
     });
 };
 
-// multer 설정 (파일 저장 경로 및 파일명 지정)
+// multer 설정
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');  // 파일이 저장될 경로
+        cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        // 파일명 지정 (현재 시간 + 확장자)
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 
-// 파일 확장자 확인 (보안 강화)
 const fileFilter = (req, file, cb) => {
     const allowedFileTypes = /jpeg|jpg|png|gif/;
     const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -79,14 +75,11 @@ const upload = multer({
 app.post('/api/notice', upload.single('image'), (req, res) => {
     const { title, content } = req.body;
 
-    // 필수 필드 확인
     if (!title || !content) {
         return res.status(400).json({ error: '제목과 내용을 입력해야 합니다.' });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : null;  // 파일이 있을 경우 경로 저장
-
-    // MySQL에 공지사항 및 이미지 저장
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
     const query = 'INSERT INTO notices (title, content, image) VALUES (?, ?, ?)';
     db.query(query, [title, content, image], (err, result) => {
         if (err) {
@@ -100,15 +93,30 @@ app.post('/api/notice', upload.single('image'), (req, res) => {
     });
 });
 
-// 공지사항 목록 불러오기 엔드포인트 (GET 요청)
+// 공지사항 목록 불러오기 엔드포인트 (GET 요청 + 페이지네이션 + 검색)
 app.get('/api/notices', (req, res) => {
-    const query = 'SELECT * FROM notices ORDER BY created_at DESC';  // 최신순으로 정렬
-    db.query(query, (err, results) => {
+    const page = parseInt(req.query.page) || 1;  // 요청된 페이지 번호, 기본값 1
+    const limit = parseInt(req.query.limit) || 5;  // 페이지당 항목 수, 기본값 5
+    const offset = (page - 1) * limit;
+    const search = req.query.search ? `%${req.query.search}%` : '%';  // 검색어가 있으면 적용, 없으면 전체 검색
+
+    const query = 'SELECT * FROM notices WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    db.query(query, [search, search, limit, offset], (err, results) => {
         if (err) {
             console.error('공지사항 불러오기 오류:', err);
             return res.status(500).json({ error: '데이터 불러오기 중 오류가 발생했습니다.' });
         }
-        res.status(200).json(results);
+
+        // 총 공지사항 수를 가져와서 페이지네이션 정보도 함께 반환
+        const countQuery = 'SELECT COUNT(*) AS total FROM notices WHERE title LIKE ? OR content LIKE ?';
+        db.query(countQuery, [search, search], (err, countResults) => {
+            if (err) {
+                console.error('공지사항 개수 불러오기 오류:', err);
+                return res.status(500).json({ error: '데이터 불러오기 중 오류가 발생했습니다.' });
+            }
+            const totalNotices = countResults[0].total;
+            res.status(200).json({ notices: results, total: totalNotices, page, limit });
+        });
     });
 });
 
@@ -116,14 +124,12 @@ app.get('/api/notices', (req, res) => {
 app.put('/api/notice/:id', upload.single('image'), (req, res) => {
     const { title, content } = req.body;
     const { id } = req.params;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;  // 새 이미지가 있을 경우 업데이트
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
 
-    // 필수 필드 확인
     if (!title || !content) {
         return res.status(400).json({ error: '제목과 내용을 입력해야 합니다.' });
     }
 
-    // 이미지가 있으면 업데이트, 없으면 기존 이미지 유지
     const query = 'UPDATE notices SET title = ?, content = ?, image = IFNULL(?, image) WHERE id = ?';
     db.query(query, [title, content, image, id], (err, result) => {
         if (err) {
