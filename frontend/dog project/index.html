@@ -13,7 +13,7 @@
 <body>
     <div class="main-container">
         <header>
-            <a href="#" class="logo-button">
+            <a href="index.html" class="logo-button">
                 <img src="logo.png" alt="로고" class="logo-image">
             </a>
             <nav>
@@ -36,8 +36,8 @@
                     </li>
                     <li><a href="#" class="menu-item" data-menu="animals">보호동물</a>
                         <ul>
-                            <li><a href="#">보호강아지</a></li>
-                            <li><a href="#">보호고양이</a></li>
+                            <li><a href="dog_index.html">보호강아지</a></li>
+                            <li><a href="cat_index.html">보호고양이</a></li>
                             <li><a href="#">기타보호동물</a></li>
                         </ul>
                     </li>
@@ -96,7 +96,7 @@
             </section>
                 <!-- 보호 동물 섹션 -->
                 <div class="animal-section">
-                    <h2>가족을 찾고 있어요</h2>
+                    <h2>가족을 찾고 있어요<button class="add-button" onclick="redirectToAddPage()">+</button></h2>
                         
                     <!-- 보호 동물 탭 -->
                     <div class="animal-tabs">
@@ -180,7 +180,7 @@
             
                 <!-- 정보 게시판 섹션 -->
                 <div class="info-section">
-                    <h2>정보 게시판</h2>
+                    <h2>정보 게시판<button class="add-button" onclick="redirectToAddPage()">+</button></h2>
                     <div class="info-tabs">
                         <span class="tab active" data-tab="notice">공지사항</span>
                         <span class="tab" data-tab="free">자유게시판</span>
