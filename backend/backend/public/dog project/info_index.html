@@ -73,6 +73,12 @@
         <h1>공지사항</h1>
         <div class="search-bar">
             <input type="text" id="search" placeholder="찾으시는 게시물이 있습니까?">
+            <select id="searchType">
+                <option value="id">번호</option>
+                <option value="title">제목</option>
+                <option value="date">작성일</option>
+                <option value="title_content">제목+내용</option>
+            </select>
             <button onclick="searchNotices()">검색</button>
         </div>
         <table>
@@ -86,8 +92,7 @@
                     <th>파일</th>
                 </tr>
             </thead>
-            <tbody id="notice-list">
-            </tbody>
+            <tbody id="notice-list"></tbody>
         </table>
         <div class="pagination">
             <button onclick="prevPage()">&lt;&lt;</button>

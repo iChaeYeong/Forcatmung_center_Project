@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const PORT = 5001;
 
-// MySQL 연결 설정 (환경 변수를 사용하는 것이 더 좋습니다.)
+// MySQL 연결 설정
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -24,7 +24,7 @@ db.connect((err) => {
     console.log('MySQL에 연결되었습니다.');
 });
 
-// 업로드 폴더 생성 함수
+// 업로드 폴더 생성
 const createUploadDir = () => {
     const uploadDir = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -117,16 +117,19 @@ app.get('/api/notices', (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
     const search = req.query.search ? `%${req.query.search}%` : '%';
+    const searchType = req.query.searchType || 'title';  // 검색 유형
 
-    const query = 'SELECT * FROM notices WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?';
-    const countQuery = 'SELECT COUNT(*) AS total FROM notices WHERE title LIKE ? OR content LIKE ?';
+    let whereClause = `${searchType} LIKE ?`;
 
-    executeQuery(query, [search, search, limit, offset], (err, results) => {
+    const query = `SELECT * FROM notices WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    const countQuery = `SELECT COUNT(*) AS total FROM notices WHERE ${whereClause}`;
+
+    executeQuery(query, [search, limit, offset], (err, results) => {
         if (err) {
             return res.status(500).json({ error: '공지사항 불러오기 중 오류가 발생했습니다.' });
         }
 
-        executeQuery(countQuery, [search, search], (err, countResults) => {
+        executeQuery(countQuery, [search], (err, countResults) => {
             if (err) {
                 return res.status(500).json({ error: '공지사항 개수 불러오기 중 오류가 발생했습니다.' });
             }
