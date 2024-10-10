@@ -1,12 +1,16 @@
 import React from 'react';
-import NoticeBoard from './components/NoticeBoard';  // 우리가 만든 NoticeBoard 컴포넌트 불러오기
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import NoticeBoard from './components/NoticeBoard';
+import NoticeDetail from './components/NoticeDetail';
 
 function App() {
     return (
-        <div className="App">
-            <h1>Admin Page</h1>  {/* 간단한 헤더 추가 */}
-            <NoticeBoard />  {/* 공지사항 작성 폼 추가 */}
-        </div>
+        <Router>
+            <Routes>
+                <Route path="/" element={<NoticeBoard />} />
+                <Route path="/notice/:id" element={<NoticeDetail />} /> {/* 세부 페이지 라우트 */}
+            </Routes>
+        </Router>
     );
 }
 
