@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { TextField, Button, Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, Pagination } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';  // + 아이콘 추가
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const NoticeBoard = () => {
     const [title, setTitle] = useState('');
@@ -206,8 +206,8 @@ const NoticeBoard = () => {
                     <List>
                         {notices.map((notice) => {
                             // 이미지 및 파일을 JSON 배열로 변환
-                            const noticeImages = notice.images ? JSON.parse(notice.images) : [];
-                            const noticeFiles = notice.files ? JSON.parse(notice.files) : [];
+                            const noticeImages = notice.images ? JSON.parse(notice.images || '[]') : [];
+                            const noticeFiles = notice.files ? JSON.parse(notice.files || '[]') : [];
 
                             return (
                                 <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2, backgroundColor: '#fff' }}>
@@ -218,14 +218,14 @@ const NoticeBoard = () => {
                                                 <Typography variant="body2" color="textSecondary">
                                                     {notice.content}
                                                 </Typography>
-                                                {noticeImages.length > 0 && (
+                                                {Array.isArray(noticeImages) && noticeImages.length > 0 && (
                                                     <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                                         {noticeImages.map((image, index) => (
                                                             <img key={index} src={`http://localhost:5001${image}`} alt={notice.title} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
                                                         ))}
                                                     </Box>
                                                 )}
-                                                {noticeFiles.length > 0 && (
+                                                {Array.isArray(noticeFiles) && noticeFiles.length > 0 && (
                                                     <Box sx={{ mt: 2 }}>
                                                         <Typography variant="subtitle1">첨부 파일:</Typography>
                                                         {noticeFiles.map((file, index) => (
