@@ -1,0 +1,122 @@
+/* 슬라이더 기본 스타일 */
+.main-banner {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.slider {
+    position: relative;
+    width: 100%;
+    height: 500px; /* 슬라이더 높이 */
+    overflow: hidden; /* 슬라이드가 밖으로 넘치지 않도록 숨김 */
+}
+
+.slides {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+    
+    box-sizing: border-box;
+    position: relative;
+    min-width: 100%;
+    height: 100%;
+
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 이전 및 다음 버튼 */
+.prev, .next {
+    position: absolute;
+    top: 50%;
+    width: auto;
+    padding: 16px;
+    margin-top: -22px;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 18px;
+    user-select: none;
+}
+
+
+
+.banner-text{
+    position: absolute;
+    top: 50%; 
+    left: 80%;
+    transform: translate(-50%, -50%); /* 중앙 정렬을 위한 변환 */
+    color: white; /* 글씨 색상 */
+    text-align: right; /* 텍스트 중앙 정렬 */
+    padding: 0px; /* 여백 추가 */
+    border-radius: 10px; /* 모서리를 둥글게 */
+}
+.banner-text h2 {
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+.banner-text h1 {
+    font-size: 5em;
+}
+.banner-text p {
+    font-size: 2em;
+}
+
+.banner-text button {
+    padding: 10px 20px;
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    display: flex;
+}
+
+
+
+
+.prev {
+    left: 10px;
+}
+
+.next {
+    right: 10px;
+}
+
+/* 슬라이드 네비게이션 (밑에 ..._... 표시) */
+.slider-dots {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.slider-dots .dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 5px;
+    background-color: #bbb;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-dots .dot.active {
+    background-color: #333;
+}
+
+.layout-container {
+    display: flex;
+    gap: 20px; 
+    justify-content: space-between; 
+}
+
