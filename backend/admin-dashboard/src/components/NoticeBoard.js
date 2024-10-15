@@ -1,32 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { TextField, Button, Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, Pagination } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { TextField, Button, Container, Box, List, ListItem, ListItemText, CircularProgress, Pagination, Typography } from '@mui/material';
 
 const NoticeBoard = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [images, setImages] = useState([]);  // 여러 이미지
-    const [files, setFiles] = useState([]);  // 여러 파일
+    const [images, setImages] = useState([]);
+    const [files, setFiles] = useState([]);
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [imagePreviews, setImagePreviews] = useState([]);  // 여러 이미지 미리보기
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
     const [editingNotice, setEditingNotice] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [search, setSearch] = useState('');  // 검색어 상태 추가
+    const [search, setSearch] = useState('');
     const limit = 5;
-    const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchNotices();
-    }, [page, search]);
-
-    const fetchNotices = () => {
+    // useCallback을 사용하여 fetchNotices 함수의 메모이제이션
+    const fetchNotices = useCallback(() => {
         setLoading(true);
         axios.get(`http://localhost:5001/api/notices?page=${page}&limit=${limit}&search=${search}`)
             .then((response) => {
+                console.log('API 응답 데이터:', response.data); // 응답 데이터를 확인
                 setNotices(response.data.notices);
                 setTotalPages(Math.ceil(response.data.total / limit));
                 setLoading(false);
@@ -35,7 +31,11 @@ const NoticeBoard = () => {
                 console.error('공지사항 데이터를 불러오는 중 오류 발생:', error);
                 setLoading(false);
             });
-    };
+    }, [page, search]);
+
+    useEffect(() => {
+        fetchNotices();
+    }, [fetchNotices]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -48,8 +48,8 @@ const NoticeBoard = () => {
         formData.append('title', title);
         formData.append('content', content);
 
-        images.forEach((image) => formData.append('images', image));  // 여러 이미지 추가
-        files.forEach((file) => formData.append('files', file));  // 여러 파일 추가
+        images.forEach((image) => formData.append('images', image));
+        files.forEach((file) => formData.append('files', file));
 
         if (editingNotice) {
             axios.put(`http://localhost:5001/api/notice/${editingNotice}`, formData, {
@@ -84,28 +84,33 @@ const NoticeBoard = () => {
         setImages([]);
         setFiles([]);
         setImagePreviews([]);
+        setFilePreviews([]);
         setEditingNotice(null);
-    };
-
-    const handleViewDetail = (id) => {
-        navigate(`/notice/${id}`);  // 클릭 시 해당 공지사항의 상세 페이지로 이동
     };
 
     const handleImageChange = (e) => {
         const selectedImages = Array.from(e.target.files);
         setImages(selectedImages);
-        const imagePreviews = selectedImages.map((image) => URL.createObjectURL(image));
-        setImagePreviews(imagePreviews);
+        const previews = selectedImages.map((image) => URL.createObjectURL(image));
+        setImagePreviews(previews);
     };
 
     const handleFileChange = (e) => {
-        setFiles(Array.from(e.target.files));  // 여러 파일 선택
+        setFiles(Array.from(e.target.files));
+        const previews = Array.from(e.target.files).map(file => file.name);
+        setFilePreviews(previews);
     };
 
     const handleEdit = (notice) => {
         setTitle(notice.title);
         setContent(notice.content);
         setEditingNotice(notice.id);
+
+        const parsedImages = safeJsonParse(notice.images);
+        const parsedFiles = safeJsonParse(notice.files);
+
+        setImagePreviews(parsedImages.map(image => `http://localhost:5001${image}`));
+        setFilePreviews(parsedFiles.map(file => file.split('/').pop()));
     };
 
     const handleDelete = (id) => {
@@ -126,13 +131,35 @@ const NoticeBoard = () => {
     };
 
     const handleSearchChange = (e) => {
-        setSearch(e.target.value);  // 검색어 상태 변경
-        setPage(1);  // 검색 시 페이지를 1로 초기화
+        setSearch(e.target.value);
+        setPage(1);
     };
 
+    const safeJsonParse = (jsonString) => {
+        // 이미 배열인 경우 그대로 반환
+        if (Array.isArray(jsonString)) {
+            return jsonString;
+        }
+
+        if (typeof jsonString !== 'string') {
+            console.log('JSON이 문자열이 아닙니다:', jsonString);
+            return [];
+        }
+
+        if (!jsonString || jsonString === 'null' || jsonString.trim() === '') {
+            console.log('JSON이 비어있거나 null입니다:', jsonString);
+            return [];
+        }
+
+        try {
+            return JSON.parse(jsonString);
+        } catch (error) {
+            console.error('JSON 파싱 오류:', error, '원본 데이터:', jsonString);
+            return [];
+        }
+    };
     return (
         <Container maxWidth="sm">
-            {/* 공지사항 작성 폼 */}
             <Box sx={{ mt: 4, p: 3, border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
                 <Typography variant="h4" gutterBottom>
                     {editingNotice ? '공지사항 수정' : '공지사항 작성'}
@@ -157,24 +184,22 @@ const NoticeBoard = () => {
                         sx={{ mb: 2 }}
                     />
 
-                    {/* 이미지 업로드 */}
                     <Typography variant="subtitle1" sx={{ mt: 2 }}>이미지 업로드:</Typography>
                     <input type="file" onChange={handleImageChange} accept="image/*" multiple />
                     {imagePreviews.length > 0 && (
                         <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                             {imagePreviews.map((preview, index) => (
-                                <img key={index} src={preview} alt="Image preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                                <img key={index} src={preview} alt={`Notice ${index}`} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
                             ))}
                         </Box>
                     )}
 
-                    {/* 파일 업로드 */}
                     <Typography variant="subtitle1" sx={{ mt: 2 }}>파일 업로드 (PDF, 문서 등):</Typography>
                     <input type="file" onChange={handleFileChange} multiple />
-                    {files.length > 0 && (
+                    {filePreviews.length > 0 && (
                         <Box sx={{ mt: 1 }}>
-                            {files.map((file, index) => (
-                                <Typography key={index} variant="body2">{file.name}</Typography>
+                            {filePreviews.map((file, index) => (
+                                <Typography key={index} variant="body2">{file}</Typography>
                             ))}
                         </Box>
                     )}
@@ -185,7 +210,6 @@ const NoticeBoard = () => {
                 </form>
             </Box>
 
-            {/* 검색 필드 추가 */}
             <TextField
                 label="검색"
                 variant="outlined"
@@ -195,7 +219,6 @@ const NoticeBoard = () => {
                 sx={{ mt: 4, mb: 4 }}
             />
 
-            {/* 공지사항 목록 */}
             <Box sx={{ mt: 4 }}>
                 <Typography variant="h5" gutterBottom>
                     공지사항 목록
@@ -205,9 +228,8 @@ const NoticeBoard = () => {
                 ) : (
                     <List>
                         {notices.map((notice) => {
-                            // 이미지 및 파일을 JSON 배열로 변환
-                            const noticeImages = notice.images ? JSON.parse(notice.images || '[]') : [];
-                            const noticeFiles = notice.files ? JSON.parse(notice.files || '[]') : [];
+                            const noticeImages = safeJsonParse(notice.images);
+                            const noticeFiles = safeJsonParse(notice.files);
 
                             return (
                                 <ListItem key={notice.id} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '8px', p: 2, backgroundColor: '#fff' }}>
@@ -220,14 +242,18 @@ const NoticeBoard = () => {
                                                 </Typography>
                                                 {Array.isArray(noticeImages) && noticeImages.length > 0 && (
                                                     <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                        {noticeImages.map((image, index) => (
-                                                            <img key={index} src={`http://localhost:5001${image}`} alt={notice.title} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
-                                                        ))}
+                                                        {noticeImages.map((image, index) => {
+                                                            console.log("이미지 경로:", `http://localhost:5001${image}`); // 경로를 콘솔에 출력하여 확인
+                                                            return (
+                                                                <img key={index} src={`http://localhost:5001${image}`} alt={`Notice image ${index}`} style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                                                            );
+                                                        })}
                                                     </Box>
                                                 )}
+
                                                 {Array.isArray(noticeFiles) && noticeFiles.length > 0 && (
                                                     <Box sx={{ mt: 2 }}>
-                                                        <Typography variant="subtitle1">첨부 파일:</Typography>
+                                                        <Typography component="div" variant="subtitle1">첨부 파일:</Typography>
                                                         {noticeFiles.map((file, index) => (
                                                             <a key={index} href={`http://localhost:5001${file}`} download>
                                                                 {file.split('/').pop()}
@@ -248,10 +274,6 @@ const NoticeBoard = () => {
                                         <Button onClick={() => handleDelete(notice.id)} variant="contained" color="error">
                                             삭제
                                         </Button>
-                                        {/* 세부 페이지로 이동하는 + 아이콘 */}
-                                        <Button onClick={() => handleViewDetail(notice.id)} sx={{ ml: 1 }}>
-                                            <AddCircleOutlineIcon />
-                                        </Button>
                                     </Box>
                                 </ListItem>
                             );
@@ -259,7 +281,7 @@ const NoticeBoard = () => {
                     </List>
                 )}
 
-                {/* 페이지네이션 */}
+
                 <Pagination
                     count={totalPages}
                     page={page}

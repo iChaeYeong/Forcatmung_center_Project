@@ -1,0 +1,198 @@
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql2');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const app = express();
+const PORT = 5001;
+
+// MySQL 연결 설정
+const db = mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '081365',
+    database: process.env.DB_NAME || 'animalcenter'
+});
+
+// MySQL 연결
+db.connect((err) => {
+    if (err) {
+        console.error('MySQL 연결 오류:', err);
+        return;
+    }
+    console.log('MySQL에 연결되었습니다.');
+    initializeDatabase(); // 데이터베이스 초기화 함수 호출
+});
+
+// 공통 SQL 실행 함수
+const executeQuery = (query, params) => {
+    return new Promise((resolve, reject) => {
+        db.query(query, params, (err, results) => {
+            if (err) {
+                console.error('SQL 실행 오류:', err);
+                return reject(err);
+            }
+            resolve(results);
+        });
+    });
+};
+
+// 업로드 폴더 생성 함수
+const createUploadDirs = () => {
+    const dirs = ['uploads', 'uploads/animals'];
+    dirs.forEach(dir => {
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+            console.log(`${dir} 폴더가 생성되었습니다.`);
+        }
+    });
+};
+
+createUploadDirs();
+
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 로그 기록 함수
+const logToFile = (message) => {
+    const logFilePath = path.join(__dirname, 'server-log.txt');
+    const logMessage = `${new Date().toLocaleString()}: ${message}\n`;
+    fs.appendFile(logFilePath, logMessage, (err) => {
+        if (err) {
+            console.error('로그 파일 기록 중 오류 발생:', err);
+        }
+    });
+};
+
+// 데이터베이스 초기화 함수
+const initializeDatabase = async () => {
+    try {
+        // NULL 값을 빈 배열로 업데이트
+        await executeQuery('UPDATE animals SET images = JSON_ARRAY() WHERE images IS NULL;');
+    } catch (err) {
+        console.error('데이터베이스 초기화 중 오류 발생:', err);
+    }
+};
+
+// multer 설정
+const storageConfig = (uploadPath) => multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadPath),
+    filename: (req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname)}`)
+});
+
+const fileFilter = (allowedFileTypes) => (req, file, cb) => {
+    const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedFileTypes.test(file.mimetype);
+    cb(null, extname && mimetype);
+};
+
+// 동물 이미지 업로드 설정
+const animalUpload = multer({
+    storage: storageConfig('uploads/animals'),
+    fileFilter: fileFilter(/jpeg|jpg|png/)
+});
+
+// 동물 정보 저장 엔드포인트
+app.post('/api/animals', animalUpload.array('images', 5), async (req, res) => {
+    const { name, species, age, breed, description, mainImageIndex, gender, characteristics, adoption_priority } = req.body;
+
+    if (!name || !species) {
+        return res.status(400).json({ error: '이름과 종류는 필수 입력 사항입니다.' });
+    }
+
+    const images = req.files ? req.files.map(file => `/uploads/animals/${file.filename}`) : [];
+    const mainImage = images[mainImageIndex] || images[0] || null;
+
+    const query = 'INSERT INTO animals (name, species, age, breed, description, gender, characteristics, images, mainImage, adoption_priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const values = [name, species, age, breed, description, gender, characteristics, JSON.stringify(images), mainImage, adoption_priority];
+
+    try {
+        await executeQuery(query, values);
+        res.status(200).json({ message: '동물 정보가 성공적으로 저장되었습니다.' });
+    } catch (err) {
+        console.error('동물 정보 저장 중 오류 발생:', err);
+        res.status(500).json({ error: '동물 정보를 저장하는 중 오류가 발생했습니다.' });
+    }
+});
+
+// 동물 목록 불러오기 엔드포인트
+app.get('/api/animals', async (req, res) => {
+    const category = req.query.category || 'all';
+
+    let query = 'SELECT * FROM animals';
+    const params = [];
+
+    if (category !== 'all') {
+        query += ' WHERE species = ?';
+        params.push(category);
+    }
+
+    query += ' ORDER BY adoption_priority DESC, created_at DESC'; // 우선순위가 높은 동물이 먼저
+
+    try {
+        const results = await executeQuery(query, params);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('동물 목록 불러오기 중 오류 발생:', err);
+        return res.status(500).json({ error: '동물 목록 불러오기 중 오류가 발생했습니다.' });
+    }
+});
+
+// 동물 삭제 엔드포인트
+app.delete('/api/animals/:id', async (req, res) => {
+    const animalId = req.params.id;
+
+    const query = 'DELETE FROM animals WHERE id = ?';
+    try {
+        await executeQuery(query, [animalId]);
+        res.status(200).json({ message: '동물이 성공적으로 삭제되었습니다.' });
+    } catch (err) {
+        console.error('동물 삭제 중 오류 발생:', err);
+        return res.status(500).json({ error: '동물 삭제 중 오류가 발생했습니다.' });
+    }
+});
+
+// 동물 우선순위 저장 엔드포인트
+app.post('/api/animals/priority', async (req, res) => {
+    const { priorityAnimals } = req.body;
+
+    const resetQuery = 'UPDATE animals SET adoption_priority = 0';
+    const updateQuery = 'UPDATE animals SET adoption_priority = 1 WHERE id IN (?)';
+
+    try {
+        await executeQuery(resetQuery, []);
+        await executeQuery(updateQuery, [priorityAnimals]);
+        res.status(200).json({ message: '우선순위 동물이 성공적으로 저장되었습니다.' });
+    } catch (err) {
+        console.error('우선순위 업데이트 중 오류 발생:', err);
+        return res.status(500).json({ error: '우선순위 업데이트 중 오류가 발생했습니다.' });
+    }
+});
+
+// 동물 정보 수정 엔드포인트
+app.put('/api/animals/:id', animalUpload.array('images', 5), async (req, res) => {
+    const { name, species, age, breed, description, mainImageIndex, gender, characteristics, existingImages, adoption_priority } = req.body;
+    const animalId = req.params.id;
+
+    const uploadedImages = req.files ? req.files.map(file => `/uploads/animals/${file.filename}`) : [];
+    const images = [...(existingImages ? JSON.parse(existingImages) : []), ...uploadedImages];
+    const mainImage = images[mainImageIndex] || images[0] || null;
+
+    const query = 'UPDATE animals SET name = ?, species = ?, age = ?, breed = ?, description = ?, gender = ?, characteristics = ?, images = ?, mainImage = ?, adoption_priority = ? WHERE id = ?';
+    const values = [name, species, age, breed, description, gender, characteristics, JSON.stringify(images), mainImage, adoption_priority, animalId];
+
+    try {
+        await executeQuery(query, values);
+        res.status(200).json({ message: '동물 정보가 성공적으로 수정되었습니다.' });
+    } catch (err) {
+        console.error('동물 정보 수정 중 오류 발생:', err);
+        res.status(500).json({ error: '동물 정보를 수정하는 중 오류가 발생했습니다.' });
+    }
+});
+
+// 서버 시작
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
