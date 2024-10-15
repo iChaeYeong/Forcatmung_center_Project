@@ -56,44 +56,44 @@ updateSlidePosition();
 // 자동 슬라이드 기능 (3초마다 슬라이드 이동)
 setInterval(nextSlide, 3000);
 
+// 동물 정보 로드 및 카드 생성
+async function loadAnimals() {
+    try {
+        const response = await fetch('http://localhost:5001/api/animals');
+        const animals = await response.json();
+        const animalList = document.getElementById('animal-list');
 
+        // 서버 경로 지정
+        const serverUrl = 'http://localhost:5001';
 
+        // 동물 카드 생성
+        animals.forEach(animal => {
+            const card = document.createElement('div');
+            card.classList.add('animal-card');
+            card.innerHTML = `
+                <img src="${serverUrl}${animal.mainImage}" alt="${animal.name}" class="animal-image">
+                <h2>${animal.name}</h2>
+                <p>${animal.age}개월 | 성별: ${animal.gender} | 특징: ${animal.characteristics}</p>
+                <button class="adopt-button">입양하기</button>
+            `;
+            animalList.appendChild(card);
+        });
+    } catch (error) {
+        console.error('동물 정보를 불러오는 중 오류 발생:', error);
+    }
+}
 
-// 모든 카드에서 이미지와 버튼을 가져옴
-document.addEventListener('DOMContentLoaded', function () {
-    const animalCards = document.querySelectorAll('.animal-card');
-    
-    animalCards.forEach(function (card) {
-        const isAdopted = card.getAttribute('data-adopted') === 'true';
-        const button = card.querySelector('.adopt-button');
-        
-        if (isAdopted) {
-            button.textContent = '입양 완료';
-            button.classList.add('adopted'); // 입양 완료된 경우 스타일 변경
-            button.disabled = true; // 버튼 비활성화
-        } else {
-            button.textContent = '입양하기';
-            button.addEventListener('click', function () {
-                alert('입양 신청이 완료되었습니다.');
-            });
-        }
-    });
-});
-
-
-
-
-
-
+// 동물 정보 로드 호출
+loadAnimals();
 
 // 탭 전환 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     // 보호 동물 탭 전환
     const animalTabs = document.querySelectorAll('.animal-tabs .tab');
     const animalTabContents = document.querySelectorAll('[data-tab-content]');
 
     animalTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
+        tab.addEventListener('click', function () {
             // 모든 동물 탭에서 active 클래스 제거
             animalTabs.forEach(t => t.classList.remove('active'));
             // 클릭한 동물 탭에 active 클래스 추가
@@ -110,12 +110,44 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
+    // 공지사항 로드 및 DOM에 추가
+    async function loadNotices() {
+        try {
+            const response = await fetch('http://localhost:5001/api/notices');
+            const data = await response.json();
+            const noticeList = document.querySelector('[data-tab-content="notice"]');
+
+            // 공지사항 데이터 처리 (제목과 작성일만 표시)
+            data.notices.forEach(notice => {
+                const noticeItem = document.createElement('div');
+                noticeItem.classList.add('notice-summary');
+                noticeItem.innerHTML = `
+                <h3>${notice.title}</h3>
+                <p>${new Date(notice.created_at).toLocaleDateString()}</p>
+            `;
+
+                // 클릭 시 세부 내용 표시
+                noticeItem.addEventListener('click', () => {
+                    alert(`제목: ${notice.title}\n\n내용: ${notice.content}`);
+                });
+
+                noticeList.appendChild(noticeItem);
+            });
+        } catch (error) {
+            console.error('공지사항 데이터를 불러오는 중 오류가 발생했습니다:', error);
+        }
+    }
+
+    // 공지사항 로드 호출
+    loadNotices();
+
+
     // 정보 게시판 탭 전환
     const infoTabs = document.querySelectorAll('.info-tabs .tab');
     const infoTabContents = document.querySelectorAll('#info-list .info-item');
 
     infoTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
+        tab.addEventListener('click', function () {
             // 모든 정보 탭에서 active 클래스 제거
             infoTabs.forEach(t => t.classList.remove('active'));
             // 클릭한 정보 탭에 active 클래스 추가
@@ -131,7 +163,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+
+
 function redirectToAddPage() {
     window.location.href = 'info-page.html'; // 이동할 페이지 경로
 }
-

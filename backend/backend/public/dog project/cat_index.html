@@ -1,105 +1,94 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat & Mung 보호센터</title>
+    <title>Cat & Mung 보호센터 - 보호 고양이</title>
     <link rel="stylesheet" href="animstyle.css">
     <link rel="stylesheet" href="header.css">
 </head>
+
 <body>
     <div class="main-container">
-    <header>
-        <a href="index.html" class="logo-button">
-            <img src="logo.png" alt="로고" class="logo-image">
-        </a>
-        <nav>
-            <ul>
-                <li><a href="index.html">HOME |</a></li>
-                <li><a href="#"> LANGUAGE |</a></li>
-                <li><a href="#"> SEARCH</a></li>
-            </ul>
-        </nav>
-        <nav>
-            <ul>
-                <li><a href="#" class="menu-item" data-menu="home">소개</a>
-                    <ul>
-                        <li><a href="#">인사말</a></li>
-                        <li><a href="#">비전</a></li>
-                        <li><a href="#">연혁</a></li>
-                        <li><a href="#">조직도</a></li>
-                        <li><a href="#">오시는 길</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" class="menu-item" data-menu="animals">보호동물</a>
-                    <ul>
-                        <li><a href="dog_index.html">보호강아지</a></li>
-                        <li><a href="animal_index.html">보호고양이</a></li>
-                        <li><a href="#">기타보호동물</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" class="menu-item" data-menu="activities">활동</a>
-                    <ul>
-                        <li><a href="#">참여하기</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" class="menu-item" data-menu="support">후원</a>
-                    <ul>
-                        <li><a href="#">후원하기</a></li>
-                        <li><a href="#">후원안내</a></li>
-                        <li><a href="#">후원금 사용내역</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" class="menu-item" data-menu="board">게시판</a>
-                    <ul>
-                        <li><a href="#">공지사항</a></li>
-                        <li><a href="#">자유게시판</a></li>
-                        <li><a href="#">입양 후 이야기</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" class="menu-item" data-menu="contact">문의</a>
-                    <ul>
-                        <li><a href="#">문의하기</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <h2>보호 고양이</h2>
+        <header>
+            <a href="index.html" class="logo-button">
+                <img src="logo.png" alt="로고" class="logo-image">
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">HOME |</a></li>
+                    <li><a href="#"> LANGUAGE |</a></li>
+                    <li><a href="#"> SEARCH</a></li>
+                </ul>
+            </nav>
+            <nav>
+                <ul>
+                    <li><a href="#" class="menu-item" data-menu="home">소개</a>
+                        <ul>
+                            <li><a href="#">인사말</a></li>
+                            <li><a href="#">비전</a></li>
+                            <li><a href="#">연혁</a></li>
+                            <li><a href="#">조직도</a></li>
+                            <li><a href="#">오시는 길</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="animals">보호동물</a>
+                        <ul>
+                            <li><a href="dog_index.html">보호강아지</a></li>
+                            <li><a href="animal_index.html">보호고양이</a></li>
+                            <li><a href="other_index.html">기타보호동물</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="activities">활동</a>
+                        <ul>
+                            <li><a href="#">참여하기</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="support">후원</a>
+                        <ul>
+                            <li><a href="#">후원하기</a></li>
+                            <li><a href="#">후원안내</a></li>
+                            <li><a href="#">후원금 사용내역</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="board">게시판</a>
+                        <ul>
+                            <li><a href="#">공지사항</a></li>
+                            <li><a href="#">자유게시판</a></li>
+                            <li><a href="#">입양 후 이야기</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="menu-item" data-menu="contact">문의</a>
+                        <ul>
+                            <li><a href="#">문의하기</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </header>
 
-        <div class="filters">
-            <label for="breed">품종</label>
-            <select id="breed">
-                <option value="코리안 숏헤어">코리안 숏헤어</option>
-            </select>
+        <main>
+            <h2>보호 고양이</h2>
 
-            <label for="location">지역</label>
-            <select id="location">
-                <option value="안산">안산</option>
-            </select>
+            <section id="animal-cards" class="animal-cards"></section>
 
-            <input type="text" id="search" placeholder="공고번호, 성별 또는 특징 검색">
-            <button id="search-btn">검색</button>
-        </div>
+            <div class="pagination">
+                <button id="prev-page" disabled>이전</button>
+                <span id="page-num">1</span>
+                <button id="next-page">다음</button>
+            </div>
+        </main>
 
-        <section id="animal-cards" class="animal-cards"></section>
-
-        <div class="pagination">
-            <button id="prev-page" disabled>이전</button>
-            <span id="page-num">1</span>
-            <button id="next-page">다음</button>
-        </div>
-    </main>
-
-    <footer>
-        <p>후원금 사용내역: 포켓멍센터 유기동물 보호소 고양이 사료 구입</p>
-        <p>주소: 충청북도 청원군 대교로 201</p>
-        <p>대표: 조명석 | 전화: 053-850-5000</p>
-        <p>Email: gayoung317003@gmail.com</p>
-    </footer>
+        <footer>
+            <p>후원금 사용내역: 포켓멍센터 유기동물 보호소 고양이 사료 구입</p>
+            <p>주소: 충청북도 청원군 대교로 201</p>
+            <p>대표: 조명석 | 전화: 053-850-5000</p>
+            <p>Email: gayoung317003@gmail.com</p>
+        </footer>
     </div>
 
     <script src="save_cat_script.js"></script>
 </body>
+
 </html>

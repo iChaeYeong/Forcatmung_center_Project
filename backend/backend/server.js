@@ -124,22 +124,67 @@ app.get('/api/notices', (req, res) => {
         .catch(err => res.status(500).json({ error: '공지사항 불러오기 중 오류가 발생했습니다.' }));
 });
 
+// 강아지 목록 불러오기 엔드포인트 (species: dog)
+app.get('/api/dogs', async (req, res) => {
+    const query = 'SELECT * FROM animals WHERE species = "dog" ORDER BY created_at DESC';
+
+    try {
+        const results = await executeQuery(query, []);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('강아지 목록 불러오기 중 오류 발생:', err);
+        return res.status(500).json({ error: '강아지 목록 불러오기 중 오류가 발생했습니다.' });
+    }
+});
+
+// 고양이 목록 불러오기 엔드포인트 (species: cat)
+app.get('/api/cats', async (req, res) => {
+    const query = 'SELECT * FROM animals WHERE species = "cat" ORDER BY created_at DESC';
+
+    try {
+        const results = await executeQuery(query, []);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('고양이 목록 불러오기 중 오류 발생:', err);
+        return res.status(500).json({ error: '고양이 목록 불러오기 중 오류가 발생했습니다.' });
+    }
+});
+
+// 기타 동물 목록 불러오기 엔드포인트 (species: other)
+app.get('/api/others', async (req, res) => {
+    const query = 'SELECT * FROM animals WHERE species = "other" ORDER BY created_at DESC';
+
+    try {
+        const results = await executeQuery(query, []);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('기타 동물 목록 불러오기 중 오류 발생:', err);
+        return res.status(500).json({ error: '기타 동물 목록 불러오기 중 오류가 발생했습니다.' });
+    }
+});
+
+
+
 // 공지사항 수정 엔드포인트
-app.put('/api/notice/:id', noticeUpload.fields([{ name: 'images', maxCount: 5 }, { name: 'files', maxCount: 5 }]), (req, res) => {
+app.put('/api/notice/:id', noticeUpload.fields([{ name: 'images', maxCount: 5 }, { name: 'files', maxCount: 5 }]), async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
 
-    const images = req.files['images'] ? req.files['images'].map(file => `/uploads/notice/${file.filename}`) : [];
-    const files = req.files['files'] ? req.files['files'].map(file => `/uploads/notice/${file.filename}`) : [];
+    const existingNoticeQuery = 'SELECT * FROM notices WHERE id = ?';
+    const existingNotice = await executeQuery(existingNoticeQuery, [id]);
+
+    if (existingNotice.length === 0) {
+        return res.status(404).json({ error: '공지사항을 찾을 수 없습니다.' });
+    }
+
+    const images = req.files['images'] ? req.files['images'].map(file => `/uploads/notice/${file.filename}`) : JSON.parse(existingNotice[0].images);
+    const files = req.files['files'] ? req.files['files'].map(file => `/uploads/notice/${file.filename}`) : JSON.parse(existingNotice[0].files);
 
     const query = 'UPDATE notices SET title = ?, content = ?, images = ?, files = ? WHERE id = ?';
     const values = [title, content, JSON.stringify(images), JSON.stringify(files), id];
 
     executeQuery(query, values)
-        .then((result) => {
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: '공지사항을 찾을 수 없습니다.' });
-            }
+        .then(() => {
             res.status(200).json({ message: '공지사항이 성공적으로 수정되었습니다.' });
         })
         .catch(err => {
@@ -187,9 +232,8 @@ app.post('/api/animals', animalUpload.array('images', 5), async (req, res) => {
         res.status(500).json({ error: '동물 정보를 저장하는 중 오류가 발생했습니다.' });
     }
 });
-
 // 동물 목록 불러오기 엔드포인트
-app.get('/api/animals', async (req, res) => {
+app.get('/api/animal1', async (req, res) => {
     const category = req.query.category || 'all';
 
     let query = 'SELECT * FROM animals';
@@ -201,6 +245,31 @@ app.get('/api/animals', async (req, res) => {
     }
 
     query += ' ORDER BY adoption_priority DESC, created_at DESC';
+
+    try {
+        const results = await executeQuery(query, params);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('동물 목록 불러오기 중 오류 발생:', err);
+        return res.status(500).json({ error: '동물 목록 불러오기 중 오류가 발생했습니다.' });
+    }
+});
+// 동물 목록 불러오기 엔드포인트
+app.get('/api/animals', async (req, res) => {
+    const category = req.query.category || 'all';
+
+    let query = 'SELECT * FROM animals WHERE adoption_priority = 1'; // 우선순위가 1인 동물만 반환
+    const params = [];
+
+    if (category !== 'all') {
+        query += ' AND species = ?';
+        params.push(category);
+    }
+
+    // 동물 정보 저장 엔드포인트
+
+
+    query += ' ORDER BY created_at DESC';
 
     try {
         const results = await executeQuery(query, params);

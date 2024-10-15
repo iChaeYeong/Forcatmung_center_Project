@@ -42,7 +42,7 @@ function AnimalManagement() {
 
     const fetchAnimals = async () => {
         try {
-            const response = await axios.get('http://localhost:5001/api/animals');
+            const response = await axios.get('http://localhost:5001/api/animal1');
             setAnimals(response.data);
             setFilteredAnimals(response.data);
         } catch (error) {
